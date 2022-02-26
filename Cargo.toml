@@ -1,8 +1,13 @@
 [package]
+edition = "2021"
 name = "bevy-jam-2022"
 version = "0.1.0"
-edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+bevy = "0.6.1"
+bevy_prototype_lyon = "0.4.0"
+big-brain = "0.10.0"
+heron = "2.0.1"
+iter_tools = "0.1.0"
