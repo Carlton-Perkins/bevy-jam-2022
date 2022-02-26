@@ -1,10 +1,9 @@
 mod lane;
 
+use bevy::input::keyboard::KeyboardInput;
 use bevy::{core::FixedTimestep, prelude::*, window::WindowResizeConstraints};
 use bevy_prototype_lyon::prelude::*;
-use bevy::input::keyboard::KeyboardInput;
 use heron::prelude::*;
-use bevy_prototype_lyon::prelude::*;
 
 const SCREEN_WIDTH: f32 = 1500.;
 const SCREEN_HEIGHT: f32 = 1100.;
@@ -26,8 +25,14 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugin(PhysicsPlugin::default())
         .add_plugin(ShapePlugin)
-        .add_startup_system(lane::lane_array_builder)
         .add_startup_system(setup_system)
+        .add_startup_system(lane::lane_array_builder)
+        .add_system(lane::update_lane_height_on_update)
+        .add_system_set(
+            SystemSet::new()
+                .with_run_criteria(FixedTimestep::step(2.))
+                .with_system(lane::random_lane_height),
+        )
         .add_system(keyboard_events)
         .run()
 }
@@ -55,20 +60,20 @@ fn setup_system(mut commands: Commands) {
         .insert(ExampleShape)
         // Make it a rigid body
         .insert(RigidBody::Dynamic)
-
         // Attach a collision shape
         .insert(CollisionShape::Sphere { radius: 10.0 })
-
         // Optionally add other useful components...
         .insert(Velocity::from_linear(Vec3::X * 2.0))
         .insert(Acceleration::from_linear(Vec3::X * 1.0))
-        .insert(PhysicMaterial { friction: 1.0, density: 10.0, ..Default::default() })
+        .insert(PhysicMaterial {
+            friction: 1.0,
+            density: 10.0,
+            ..Default::default()
+        })
         .insert(RotationConstraints::lock());
 }
 
-fn keyboard_events(
-    mut key_evr: EventReader<KeyboardInput>,
-) {
+fn keyboard_events(mut key_evr: EventReader<KeyboardInput>) {
     use bevy::input::ElementState;
 
     for ev in key_evr.iter() {
