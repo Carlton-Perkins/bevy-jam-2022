@@ -1,6 +1,6 @@
 mod lane;
 
-use bevy::{prelude::*, window::WindowResizeConstraints};
+use bevy::{core::FixedTimestep, prelude::*, window::WindowResizeConstraints};
 use bevy_prototype_lyon::prelude::*;
 use bevy::input::keyboard::KeyboardInput;
 use heron::prelude::*;

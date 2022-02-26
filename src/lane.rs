@@ -1,10 +1,10 @@
 use bevy::prelude::*;
 use bevy_prototype_lyon::{entity::ShapeBundle, prelude::*};
-use rand::prelude::SliceRandom;
+use rand::{prelude::SliceRandom, Rng};
 
 pub struct LaneCount(pub isize);
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 enum LaneState {
     Entering,
     OnScreen,
@@ -18,7 +18,7 @@ impl Default for LaneState {
 }
 
 #[derive(Debug, Component, Default)]
-struct Lane {
+pub struct Lane {
     width: f32,
     height: f32,
     state: LaneState,
@@ -48,6 +48,7 @@ pub fn lane_array_builder(
         Color::YELLOW,
         Color::PURPLE,
     ];
+    let states = vec![LaneState::Entering, LaneState::Leaving];
     let mut rng = rand::thread_rng();
     let screen_bottom_left = Vec3::new(-(window.width / 2.), -(window.height / 2.), 5.);
 
@@ -56,7 +57,7 @@ pub fn lane_array_builder(
         let lane = Lane {
             width: lane_width,
             height: lane_height,
-            state: LaneState::OnScreen,
+            state: *states.choose(&mut rng).unwrap(),
         };
 
         let shape = shapes::Rectangle {
@@ -76,5 +77,33 @@ pub fn lane_array_builder(
             lane,
             shape: geometry,
         });
+    }
+}
+
+pub fn update_lane_height_on_update(
+    mut lanes: Query<(&Lane, &mut Path, &mut Transform), Changed<Lane>>,
+    window: Res<WindowDescriptor>,
+) {
+    for (lane, mut path, mut transform) in lanes.iter_mut() {
+        let new_shape = shapes::Rectangle {
+            extents: Vec2::new(lane.width, lane.height),
+            origin: RectangleOrigin::BottomLeft,
+        };
+
+        // If the lane is leaving, we need to translate it to rest against the top of the screen
+        match lane.state {
+            LaneState::Entering => (),
+            LaneState::OnScreen => (),
+            LaneState::Leaving => transform.translation.y = (window.height / 2.) - lane.height,
+        }
+
+        *path = ShapePath::build_as(&new_shape);
+    }
+}
+
+pub fn random_lane_height(mut lanes: Query<&mut Lane>, window: Res<WindowDescriptor>) {
+    let mut rng = rand::thread_rng();
+    for mut lane in lanes.iter_mut() {
+        lane.height = window.height * rng.gen_range(0.2..=1.0)
     }
 }
